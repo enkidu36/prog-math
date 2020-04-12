@@ -7,7 +7,8 @@
   :min-lein-version "2.7.1"
 
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.10.520"]]
+                 [org.clojure/clojurescript "1.10.520"]
+                 [com.andrewmcveigh/cljs-time "0.5.2"]]
 
   :source-paths ["src"]
 

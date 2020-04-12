@@ -2,15 +2,15 @@
   (:require
     [goog.dom :as gdom]))
 
-(def width 650)
-(def height 650)
-(def chart {:offset-x 20
-            :offset-y 20
-            :grid-offset-x -280 ;; pos right, neg left
-            :grid-offset-y 130 ;; pos down, neg up
-            :width    600
-            :height   300
-            :point-size 5})
+(def width 800)
+(def height 800)
+(def chart {:offset-x      20
+            :offset-y      20
+            :grid-offset-x 0                                ;; pos right, neg left
+            :grid-offset-y 0                                ;; pos down, neg up
+            :width         600
+            :height        600
+            :point-size    5})
 (defn canvas []
   (gdom/getElement "myCanvas"))
 
@@ -32,12 +32,12 @@
   [(+ (/ (:width chart) 2) (:offset-x chart) (:grid-offset-x chart))
    (+ (/ (:height chart) 2) (:offset-y chart) (:grid-offset-y chart))])
 
-(def origin-x  (first origin))
+(def origin-x (first origin))
 (def origin-y (second origin))
 
 (defn pad [[x y]]
   ;; adds spacing between points
-  (let [padding (/ (:width chart) 200)]
+  (let [padding (/ (:width chart) 13)]
     [(+ x (* x padding)) (+ y (* y padding))]))
 
 (defn shift [[x y]]
@@ -57,6 +57,7 @@
   (let [y origin-y
         start (:offset-x chart)
         end (+ start (:width chart))]
+    (js/console.log (str "y: " y))
     (.beginPath (ctx))
     (set! (.-lineWidth (ctx)) .2)
     (.moveTo (ctx) start y)
@@ -73,32 +74,38 @@
     (.lineTo (ctx) x end)
     (.stroke (ctx))))
 
-(defn draw-box []
-  (set! (.-lineWidth (ctx)) 1)
-  (.strokeRect (ctx) (:offset-x chart) (:offset-y chart) (:width chart) (:height chart)))
+(defn draw-points [points]
+  (doseq [point points] (draw-grid-point point)))
 
-(defn draw-text [text]
-  (set! (.-font (ctx)) "10px Arial")
-  (.save (ctx))
-  (.translate (ctx) 20 350)
-  (.rotate (ctx) (* -45 (/ js/Math.PI 180)))
-  (let [f (fn [count] (+ 0 (* count 20)))]
-    (doseq [ctr (range (count text))]
-      (.fillText (ctx) (nth text ctr) (f ctr) (f ctr))))
-  (.restore (ctx)))
+(defn draw-line [a b]
+  (let [p1 (shift (pad a))
+        p2 (shift (pad b))]
+    (.beginPath (ctx))
+    (set! (.-lineWidth (ctx)) 1)
+    (.moveTo (ctx) (first p1) (second p1))
+    (.lineTo (ctx) (first p2) (second p2))
+    (.stroke (ctx))))
+
+(defn draw-lines [points]
+  (loop [pts points]
+    (let [[start end] pts]
+    (if (= 1 (count pts))
+      (draw-line start (first points))
+      (do
+        (draw-line start end)
+        (recur (rest pts) ))))))
+
+(def dino [[6 4] [3 1] [1 2] [-1 5] [-2 5]
+           [-3 4] [-4 4] [-5 3] [-5 2] [-2 2]
+           [-5 1] [-4 0] [-2 1] [-1 0] [0 -3]
+           [-1 -4] [1 -4] [2 -3] [1 -2] [3 -1] [5 1]])
 
 (clear-canvas)
-(draw-text ["04/04/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020" "04/05/2020"])
-;(draw-box)
-(draw-grid-point [0 0] "blue")
-(draw-grid-point [1 2])
-(draw-grid-point [3 1])
-(draw-grid-point [3 1])
-(draw-grid-point [20 20])
-(draw-grid-point [30 25])
 (x-axis)
 (y-axis)
+(draw-lines dino)
 
+;(draw-lines dino2)
 ;; specify reload hook with ^;after-load metadata
 (defn ^:after-load on-reload []
   ;; optionally touch your app-state to force rerendering depending on
